@@ -15,15 +15,22 @@ struct ProjectTarget {
 
     struct Config: Encodable {
 
+        struct PostCompileScript: Encodable {
+            let name: String
+            let script: String
+        }
+
         struct Settings: Encodable {
-            let groups: [String]
-            var base: Dictionary<String, String>
+            let groups: [String]?
+            var base: Dictionary<String, String>?
         }
 
         let type: String
         let platform: String
-        var settings: Settings
-        let sources: [String]
+        var settings: Settings?
+        let sources: [String]?
+        let dependencies: [Dictionary<String, String>]?
+        let postCompileScripts: [PostCompileScript]?
     }
 
     let originalName: String
