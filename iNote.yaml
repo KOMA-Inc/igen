@@ -1,0 +1,10 @@
+project: iNote
+
+targets:
+    Alpha:
+    Beta:
+    Gamma:
+        steals:
+            - ~/Documents/MultiTargetAutomatisation/iNote/iNote/Alpha/Resources/
+            - ~/Documents/MultiTargetAutomatisation/iNote/iNote/Beta/Modules/
+        inherit: Alpha
