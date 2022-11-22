@@ -2,11 +2,20 @@ import Foundation
 import Yams
 
 struct YAMLParser {
+
+    enum Error: Swift.Error {
+        case failedToDecodeProjectYAML
+        case noProjectNameFound
+        case noTargetFieldFound
+        case targetInfoMissingInProjectYAML
+        case noLinesAfterTargetInProjectYAML
+    }
+
     func parseTargetsYAML(using filepath: String) throws -> (config: InputConfig, lines: [String]) {
         let data = try Data(contentsOf: URL(fileURLWithPath: filepath))
         let dataString = String(decoding: data, as: UTF8.self)
 
-        guard let dict = try Yams.load(yaml: dataString) as? Dictionary<String, Any> else {
+        guard let dict = try Yams.load(yaml: dataString) as? AnyDictionary else {
             print("Failed to decode your project.yaml config file")
             throw Error.failedToDecodeProjectYAML
         }
@@ -16,13 +25,13 @@ struct YAMLParser {
             throw Error.noProjectNameFound
         }
 
-        guard let targetsDict = dict["targets"] as? Dictionary<String, Any> else {
+        guard let targetsDict = dict["targets"] as? AnyDictionary else {
             print("No field named `targets` found!")
             throw Error.noTargetFieldFound
         }
 
         let targets: [InputTarget] = targetsDict.compactMap { key, config in
-            let target = targetsDict[key] as? Dictionary<String, Any>
+            let target = targetsDict[key] as? AnyDictionary
             let steals = target?["steals"] as? [String]
             let inherit = target?["inherit"] as? String
             return .init(name: key, steals: steals, inherit: inherit)
@@ -62,38 +71,38 @@ struct YAMLParser {
         // Remove targets section from all lines
         lines.removeSubrange(targetsStartLineNumber..<(targetsEndLineNumber ?? lines.endIndex))
 
-        guard let targetsYAML = try Yams.load(yaml: targetsYAMLText) as? Dictionary<String, Any> else {
+        guard let targetsYAML = try Yams.load(yaml: targetsYAMLText) as? AnyDictionary else {
             print("Failed to decode your project.yaml config file")
             throw Error.failedToDecodeProjectYAML
         }
 
-        guard let targets = targetsYAML["targets"] as? Dictionary<String, Any> else {
+        guard let targets = targetsYAML["targets"] as? AnyDictionary else {
             print("Didn't find any target info in your project.yaml")
             throw Error.targetInfoMissingInProjectYAML
         }
 
         let outputTargets: [OutputTarget] = targets.compactMap { key, value -> OutputTarget? in
-            guard let dict = value as? Dictionary<String, Any> else {
+            guard let dict = value as? AnyDictionary else {
                 print("🚨 Could not case value to dictionary")
                 return nil
             }
 
-            guard let type = dict["type"] as? String else {
+            guard let type = dict["type"] as? TargetType else {
                 print("🚨 type not found")
                 return nil
             }
 
-            guard let platform = dict["platform"] as? String else {
+            guard let platform = dict["platform"] as? Platform else {
                 print("🚨 platform not found")
                 return nil
             }
 
             var configSettings: OutputTarget.Config.Settings?
 
-            let settings = dict["settings"] as? Dictionary<String, Any>
+            let settings = dict["settings"] as? AnyDictionary
             if let settings {
-                let groups = settings["groups"] as? [String]
-                let base = settings["base"] as? Dictionary<String, Any>
+                let groups = settings["groups"] as? [Group]
+                let base = settings["base"] as? AnyDictionary
                 let baseMapped = base?.mapValues { "\($0)" }
 
                 if groups != nil || baseMapped != nil {
@@ -103,12 +112,12 @@ struct YAMLParser {
                 print("⚠️ Warning! No settings found for target with name \(key)")
             }
 
-            let sources = dict["sources"] as? [String]
+            let sources = dict["sources"] as? [Source]
             if sources == nil {
                 print("⚠️ Warning! Sources not found for target with name \(key)")
             }
 
-            let dependencies = dict["dependencies"] as? [Dictionary<String, String>]
+            let dependencies = dict["dependencies"] as? [Dependency]
             let postCompileScripts: [OutputTarget.Config.PostCompileScript]? =
             (dict["postCompileScripts"] as? [Dictionary<String, String>])?.compactMap {
                 guard let script = $0["script"] else {
@@ -139,5 +148,36 @@ struct YAMLParser {
         }
 
         return (lines, targetsStartLineNumber, outputTargets)
+    }
+
+    func parsePackagesInProjectYAML(using filepath: String) throws -> [String] {
+        let projectYAMLData = try Data(contentsOf: URL(fileURLWithPath: filepath))
+        let projectYAMLString = String(decoding: projectYAMLData, as: UTF8.self)
+
+        // All lines in project.yaml file
+        let lines = projectYAMLString.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+
+        // Find the start of `packages:` section
+        guard let packagesStartLineNumber = lines.firstIndex(of: "packages:"),
+              packagesStartLineNumber + 1 < lines.count else {
+            return []
+        }
+
+        // Find the end of `packages:` section
+        let packagesEndLineNumber = lines[(packagesStartLineNumber + 1)...].firstIndex(where: {
+            guard let firstChar = $0.first else { return false }
+            return !firstChar.isWhitespace
+        })
+
+        // Extract the packages section
+        let packagesLines = lines[packagesStartLineNumber..<(packagesEndLineNumber ?? lines.endIndex)]
+        let packagesYAMLText = packagesLines.joined(separator: "\n")
+
+        guard let dict = try Yams.load(yaml: packagesYAMLText) as? AnyDictionary,
+              let packages = dict["packages"] as? AnyDictionary else {
+            return []
+        }
+
+        return packages.map { key, _ in key }
     }
 }

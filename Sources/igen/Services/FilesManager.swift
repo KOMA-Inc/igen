@@ -1,6 +1,11 @@
 import Foundation
 
 struct FilesManager {
+
+    enum Error: Swift.Error {
+        case noTargetFieldFound
+    }
+
     func updateProjectYAML(path: String, lines: [String]) throws {
         let url = URL(fileURLWithPath: path)
         try lines.joined(separator: "\n").write(to: url, atomically: true, encoding: .utf8)

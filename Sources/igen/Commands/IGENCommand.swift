@@ -1,14 +1,5 @@
 import ArgumentParser
 
-enum Error: Swift.Error {
-    case noProjectNameFound
-    case failedToDecodeTargetsYAML
-    case noTargetFieldFound
-    case targetInfoMissingInProjectYAML
-    case noLinesAfterTargetInProjectYAML
-    case failedToDecodeProjectYAML
-}
-
 @main
 struct IGENCommand: ParsableCommand {
 

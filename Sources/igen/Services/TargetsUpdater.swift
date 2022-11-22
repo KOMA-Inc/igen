@@ -1,6 +1,11 @@
 import Yams
 
 struct TargetsUpdater {
+
+    enum Error: Swift.Error {
+        case dependencyNotFound
+    }
+
     func generateUpdatedOutputTargets(
         for inputConfig: InputConfig,
         using outputTargets: [OutputTarget]
@@ -78,5 +83,58 @@ struct TargetsUpdater {
         newLines.insert(contentsOf: yamlLines, at: index)
 
         return newLines
+    }
+
+    func addDependency(
+        named dependency: String,
+        usingInputConfig inputConfig: InputConfig,
+        outputTargets: [OutputTarget],
+        packages: [String]
+    ) throws -> [OutputTarget] {
+
+        let dependecyType: DependencyType
+
+        if packages.contains(dependency) {
+            dependecyType = .package
+        } else if inputConfig.targets.contains(where: { $0.name == dependency }) {
+            dependecyType = .target
+        } else {
+            throw Error.dependencyNotFound
+        }
+
+        var outputTargets = outputTargets
+
+        outputTargets.enumerated().forEach { index, outputTarget in
+            guard inputConfig.targets
+                .contains(where: { $0.name.prefixed(with: inputConfig.projectName) == outputTarget.name }) else {
+                return
+            }
+
+            let newDependency = [dependecyType.rawValue: dependency]
+            let newDependencies: [Dependency]
+
+            if let dependencies = outputTarget.config.dependencies {
+                newDependencies = dependencies + [newDependency]
+            } else {
+                newDependencies = [newDependency]
+            }
+
+            let newOutputTarget = OutputTarget(
+                originalName: outputTarget.originalName,
+                name: outputTarget.name,
+                config: .init(
+                    type: outputTarget.config.type,
+                    platform: outputTarget.config.platform,
+                    settings: outputTarget.config.settings,
+                    sources: outputTarget.config.sources,
+                    dependencies: newDependencies,
+                    postCompileScripts: outputTarget.config.postCompileScripts
+                )
+            )
+
+            outputTargets[index] = newOutputTarget
+        }
+
+        return outputTargets
     }
 }

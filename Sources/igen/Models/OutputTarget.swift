@@ -4,13 +4,21 @@ struct OutputTarget {
     var config: Config
 }
 
+typealias AnyDictionary = Dictionary<String, Any>
+typealias TargetType = String
+typealias Platform = String
+typealias Dependency = Dictionary<String, String>
+typealias Group = String
+typealias BaseSettings = Dictionary<String, String>
+typealias Source = String
+
 extension OutputTarget {
     struct Config: Encodable {
-        let type: String
-        let platform: String
+        let type: TargetType
+        let platform: Platform
         var settings: Settings?
-        let sources: [String]?
-        let dependencies: [Dictionary<String, String>]?
+        let sources: [Source]?
+        let dependencies: [Dependency]?
         let postCompileScripts: [PostCompileScript]?
     }
 }
@@ -22,7 +30,7 @@ extension OutputTarget.Config {
     }
 
     struct Settings: Encodable {
-        let groups: [String]?
-        var base: Dictionary<String, String>?
+        let groups: [Group]?
+        var base: BaseSettings?
     }
 }
