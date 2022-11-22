@@ -5,6 +5,6 @@ build:
 	cp Build/debug/igen .
 
 clean:
-	rm -rf figma-export
+	rm -rf igen
 	rm -rf Build
 
