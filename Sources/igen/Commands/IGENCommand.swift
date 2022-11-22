@@ -3,9 +3,9 @@ import ArgumentParser
 enum Error: Swift.Error {
     case noProjectNameFound
     case failedToDecodeTargetsYAML
-    case noTargetFieldFFound
+    case noTargetFieldFound
     case targetInfoMissingInProjectYAML
-    case noLinesAfrerTargetInProjectYAML
+    case noLinesAfterTargetInProjectYAML
     case failedToDecodeProjectYAML
 }
 
@@ -18,8 +18,4 @@ struct IGENCommand: ParsableCommand {
             RegenerateCommand.self,
             AddDependencyCommand.self
         ])
-
-
-    
-
 }

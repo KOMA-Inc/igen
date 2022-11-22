@@ -10,7 +10,7 @@ struct AddDependencyCommand: ParsableCommand {
     @Argument(help: "The filepath to .yaml with targen info")
     var filepath: String
 
-    @Argument(help: "This filepath to your project.yaml")
+    @Argument(help: "The filepath to your project.yaml")
     var projectYAMLFilepath: String
 
     func run() throws {
