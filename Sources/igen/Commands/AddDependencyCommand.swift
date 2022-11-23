@@ -7,7 +7,7 @@ struct AddDependencyCommand: ParsableCommand {
     @Argument(help: "The name of the dependency")
     var dependencyName: String
 
-    @Argument(help: "The filepath to .yaml with targen info")
+    @Argument(help: "The filepath to .yaml with targets info")
     var targetsYAMLFilepath: String
 
     @Argument(help: "The filepath to your project.yaml")
@@ -36,7 +36,7 @@ struct AddDependencyCommand: ParsableCommand {
             using: newOutputTargets
         )
 
-        // Update .yaml files
+        // Write to files
         let filesManager = FilesManager()
         try filesManager.updateProjectYAML(path: projectYAMLFilepath, lines: newLines)
     }

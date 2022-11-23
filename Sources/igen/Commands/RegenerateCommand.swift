@@ -6,7 +6,7 @@ struct RegenerateCommand: ParsableCommand {
 
     static let configuration = CommandConfiguration(commandName: "regenerate")
 
-    @Argument(help: "The filepath to .yaml with targen info")
+    @Argument(help: "The filepath to .yaml with targets info")
     var targetsYAMLFilepath: String
 
     @Argument(help: "The filepath to your project.yaml")
@@ -38,7 +38,7 @@ struct RegenerateCommand: ParsableCommand {
         manager.createSourceDirs(for: newOutputTargets)
         manager.stealFiles(inputConfig: inputConfig, outputTargets: newOutputTargets)
 
-        // Update .yaml files
+        // Write to files
         let filesManager = FilesManager()
         try filesManager.updateProjectYAML(path: projectYAMLFilepath, lines: newLines)
         try filesManager.updateTargetsYAML(path: targetsYAMLFilepath, config: inputConfig, lines: targetYAMLLines)
